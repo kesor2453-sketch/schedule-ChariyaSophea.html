@@ -183,10 +183,12 @@
     .panel#panel-schedule { display:block !important; }
     .month-nav { margin-bottom:6px; }
     .month-nav .month-label { font-size:14px; min-width:0; }
-    table.sched { font-size:8px; width:100%; }
+    table.sched { font-size:8px; width:100%; table-layout:fixed; }
+    table.sched thead th:first-child, table.sched td.date-cell { width:52px; }
     table.sched thead th { padding:3px 2px; }
-    table.sched tbody td { padding:2px; }
-    .cell-slot { padding:2px 3px; min-height:auto; border-radius:4px; }
+    table.sched tbody td { padding:1px; }
+    td.date-cell { padding-left:3px !important; }
+    .cell-slot { padding:2px 3px; min-height:auto; border-radius:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     table.sched tbody tr { page-break-inside: avoid; }
     * {
       -webkit-print-color-adjust: exact !important;
