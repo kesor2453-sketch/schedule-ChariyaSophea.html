@@ -168,6 +168,32 @@
   @keyframes spin{to{transform:rotate(360deg);}}
 
   .empty-state{text-align:center;padding:30px;color:var(--sub);font-size:13px;}
+
+  /* ---- Print: schedule table only, landscape, fit on one page ---- */
+  @media print {
+    @page { size: landscape; margin: 8mm; }
+    html, body { background:#fff; }
+    #app { max-width:100%; padding:0; margin:0; }
+    header.top, .tabs, .toast,
+    .month-nav .nav-btn, .month-nav .today-btn, .month-nav select,
+    #unlockScheduleBtn, #copyPrevMonthBtn,
+    .col-add, .col-move, .col-del { display:none !important; }
+    .card { box-shadow:none; padding:0; margin:0; }
+    .panel { display:none !important; }
+    .panel#panel-schedule { display:block !important; }
+    .month-nav { margin-bottom:6px; }
+    .month-nav .month-label { font-size:14px; min-width:0; }
+    table.sched { font-size:8px; width:100%; }
+    table.sched thead th { padding:3px 2px; }
+    table.sched tbody td { padding:2px; }
+    .cell-slot { padding:2px 3px; min-height:auto; border-radius:4px; }
+    table.sched tbody tr { page-break-inside: avoid; }
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -197,6 +223,8 @@
           <button class="today-btn" id="todayBtn">ខែនេះ</button>
           <select class="today-btn" id="monthPicker" style="cursor:pointer;"></select>
           <button type="button" class="today-btn complete-btn" id="unlockScheduleBtn" onclick="toggleScheduleLock()" style="display:none;"></button>
+          <button type="button" class="today-btn" id="copyPrevMonthBtn" onclick="manualCopyPreviousMonth()" title="ចម្លងកាលវិភាគពីខែមុនមកខែនេះ">⧉ ចម្លងខែមុន</button>
+          <button type="button" class="today-btn" onclick="window.print()" title="បោះពុម្ពកាលវិភាគខែនេះ (១ទំព័រផ្តេក)">🖶 បោះពុម្ព</button>
         </div>
       </div>
       <div id="scheduleWrap"></div>
@@ -320,6 +348,7 @@ var STATE = {
   scheduleAll: [],
   columnsByMonth: {}, // { 'YYYY-MM': [ {id,label,type}, ... ] } — each month keeps its own column set
   unlockedMonths: {}, // { 'YYYY-MM': true } — past months explicitly unlocked for schedule editing
+  autoFilledMonths: {}, // { 'YYYY-MM': true } — months already auto-copied from the previous month
   rates: RATES,
   khrPerUsd: KHR_PER_USD,
   year: new Date().getFullYear(),
@@ -410,7 +439,7 @@ function seedDefaultDoctors() {
 function persistRemoteState() {
   setDoc(scheduleDocRef, {
     doctors: STATE.doctors, scheduleAll: STATE.scheduleAll, columnsByMonth: STATE.columnsByMonth,
-    unlockedMonths: STATE.unlockedMonths
+    unlockedMonths: STATE.unlockedMonths, autoFilledMonths: STATE.autoFilledMonths
   }).catch(function (err) {
     showToast('⚠ មិនអាចផ្ញើទៅ Firestore បានទេ៖ ' + err.message);
   });
@@ -441,6 +470,7 @@ document.addEventListener('DOMContentLoaded', function () {
       STATE.scheduleAll = data.scheduleAll || [];
       STATE.columnsByMonth = data.columnsByMonth || {};
       STATE.unlockedMonths = data.unlockedMonths || {};
+      STATE.autoFilledMonths = data.autoFilledMonths || {};
       if (migrateOldDefaultLabels()) persistRemoteState();
     } else if (!firstSnapshotHandled) {
       STATE.doctors = seedDefaultDoctors();
@@ -573,10 +603,79 @@ function shiftMonth(delta) {
 
 function loadSchedule() {
   document.getElementById('monthLabel').textContent = MONTH_NAMES_KM[STATE.month - 1] + ' ' + STATE.year;
+  maybeAutoCopyFromPreviousMonth();
   renderSchedule();
   refreshMonthPickers();
   renderScheduleLockButton();
 }
+
+// ---- Auto-copy a new month's schedule from the previous month ----
+// If the month currently being viewed has no schedule data at all yet,
+// and the immediately preceding calendar month DOES have data, copy that
+// previous month's day-by-day assignments (and its column layout) into
+// this new month automatically — a new month starts out "the same as last
+// month" until the user edits it. Only runs once per month (tracked in
+// STATE.autoFilledMonths) so a month the user has since cleared on purpose
+// is never re-filled.
+function prevCalendarMonthKey(y, m) {
+  var pm = m - 1, py = y;
+  if (pm < 1) { pm = 12; py--; }
+  return monthKey(py, pm);
+}
+function monthHasAnyData(ym) {
+  return STATE.scheduleAll.some(function (r) {
+    if (String(r.Date || '').slice(0, 7) !== ym) return false;
+    return Object.keys(r).some(function (k) { return k !== 'Date' && k !== '_log' && r[k]; });
+  });
+}
+function copyMonthSchedule(fromYm, toY, toM) {
+  var fromParts = fromYm.split('-');
+  var fromY = Number(fromParts[0]), fromM = Number(fromParts[1]);
+  var fromDays = daysInMonth(fromY, fromM);
+  var toDays = daysInMonth(toY, toM);
+  var toYm = monthKey(toY, toM);
+
+  // Copy the previous month's column layout so labels/order match too.
+  STATE.columnsByMonth[toYm] = JSON.parse(JSON.stringify(getColumnsForMonth(fromYm)));
+  var cols = STATE.columnsByMonth[toYm];
+
+  for (var d = 1; d <= toDays; d++) {
+    var srcDay = Math.min(d, fromDays);
+    var srcRow = rowForDate(fromYm + '-' + pad2(srcDay));
+    var destDate = toYm + '-' + pad2(d);
+    var destRow = rowForDate(destDate);
+    if (!destRow) { destRow = { Date: destDate }; STATE.scheduleAll.push(destRow); }
+    cols.forEach(function (c) {
+      destRow[c.id] = srcRow ? (srcRow[c.id] || '') : '';
+    });
+  }
+}
+function maybeAutoCopyFromPreviousMonth() {
+  var ym = currentScheduleMonthKey();
+  if (STATE.autoFilledMonths[ym]) return;
+  if (monthHasAnyData(ym)) return;
+  var prevYm = prevCalendarMonthKey(STATE.year, STATE.month);
+  if (!monthHasAnyData(prevYm)) return;
+  copyMonthSchedule(prevYm, STATE.year, STATE.month);
+  STATE.autoFilledMonths[ym] = true;
+  persistRemoteState();
+  showToast('កាលវិភាគខែនេះបានចម្លងពីខែមុនស្វ័យប្រវត្តិ ✓');
+}
+function manualCopyPreviousMonth() {
+  var ym = currentScheduleMonthKey();
+  var prevYm = prevCalendarMonthKey(STATE.year, STATE.month);
+  if (!monthHasAnyData(prevYm)) {
+    showToast('⚠ ខែមុន (' + monthOptionLabel(prevYm) + ') មិនទាន់មានទិន្នន័យទេ');
+    return;
+  }
+  if (monthHasAnyData(ym) && !window.confirm('ខែនេះមានទិន្នន័យរួចហើយ — ចម្លងពីខែមុនជំនួសទាំងអស់?')) return;
+  copyMonthSchedule(prevYm, STATE.year, STATE.month);
+  STATE.autoFilledMonths[ym] = true;
+  persistRemoteState();
+  renderSchedule();
+  showToast('ចម្លងកាលវិភាគពីខែមុនរួចរាល់ ✓');
+}
+window.manualCopyPreviousMonth = manualCopyPreviousMonth;
 
 function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
 function pad2(n) { return (n < 10 ? '0' : '') + n; }
