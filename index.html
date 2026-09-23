@@ -603,7 +603,6 @@ function shiftMonth(delta) {
 
 function loadSchedule() {
   document.getElementById('monthLabel').textContent = MONTH_NAMES_KM[STATE.month - 1] + ' ' + STATE.year;
-  maybeAutoCopyFromPreviousMonth();
   renderSchedule();
   refreshMonthPickers();
   renderScheduleLockButton();
@@ -649,17 +648,6 @@ function copyMonthSchedule(fromYm, toY, toM) {
       destRow[c.id] = srcRow ? (srcRow[c.id] || '') : '';
     });
   }
-}
-function maybeAutoCopyFromPreviousMonth() {
-  var ym = currentScheduleMonthKey();
-  if (STATE.autoFilledMonths[ym]) return;
-  if (monthHasAnyData(ym)) return;
-  var prevYm = prevCalendarMonthKey(STATE.year, STATE.month);
-  if (!monthHasAnyData(prevYm)) return;
-  copyMonthSchedule(prevYm, STATE.year, STATE.month);
-  STATE.autoFilledMonths[ym] = true;
-  persistRemoteState();
-  showToast('កាលវិភាគខែនេះបានចម្លងពីខែមុនស្វ័យប្រវត្តិ ✓');
 }
 function manualCopyPreviousMonth() {
   var ym = currentScheduleMonthKey();
