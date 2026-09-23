@@ -168,6 +168,34 @@
   @keyframes spin{to{transform:rotate(360deg);}}
 
   .empty-state{text-align:center;padding:30px;color:var(--sub);font-size:13px;}
+
+  /* ---- Print: schedule table only, landscape, fit on one page ---- */
+  @media print {
+    @page { size: landscape; margin: 8mm; }
+    html, body { background:#fff; }
+    #app { max-width:100%; padding:0; margin:0; }
+    header.top, .tabs, .toast,
+    .month-nav .nav-btn, .month-nav .today-btn, .month-nav select,
+    #unlockScheduleBtn,
+    .col-add, .col-move, .col-del { display:none !important; }
+    .card { box-shadow:none; padding:0; margin:0; }
+    .panel { display:none !important; }
+    .panel#panel-schedule { display:block !important; }
+    .month-nav { margin-bottom:6px; }
+    .month-nav .month-label { font-size:14px; min-width:0; }
+    table.sched { font-size:8px; width:100%; table-layout:fixed; }
+    table.sched thead th:first-child, table.sched td.date-cell { width:52px; }
+    table.sched thead th { padding:3px 2px; }
+    table.sched tbody td { padding:1px; }
+    td.date-cell { padding-left:3px !important; }
+    .cell-slot { padding:2px 3px; min-height:auto; border-radius:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    table.sched tbody tr { page-break-inside: avoid; }
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -197,6 +225,7 @@
           <button class="today-btn" id="todayBtn">ខែនេះ</button>
           <select class="today-btn" id="monthPicker" style="cursor:pointer;"></select>
           <button type="button" class="today-btn complete-btn" id="unlockScheduleBtn" onclick="toggleScheduleLock()" style="display:none;"></button>
+          <button type="button" class="today-btn" onclick="window.print()" title="បោះពុម្ពកាលវិភាគខែនេះ (១ទំព័រផ្តេក)">🖶 បោះពុម្ព</button>
         </div>
       </div>
       <div id="scheduleWrap"></div>
@@ -766,40 +795,60 @@ function deleteColumn(id) {
 window.deleteColumn = deleteColumn;
 
 var MANUAL_DOCTOR_COLORS = {
-  // Add specific doctor-ID → color overrides here if needed.
-  // Left empty — colors are assigned automatically per doctor otherwise.
+  // Keyed by the exact doctor name as stored in "ឈ្មោះ" (NameSPV).
+  // { bg: '<fill color>', text: '<text color for readability>' }
+  'Dr.Deurn Kosal': { bg: '#ffd54f', text: '#7a5200' },        // golden yellow
+  'Dr.Pin Sothy': { bg: '#a5d6a7', text: '#1b5e20' },          // green
+  'វេជ្ជ.ស៊ាងលី វ៉ាន់ខុល': { bg: '#bbdefb', text: '#0d47a1' }, // light blue
+  'Dr.Nann Vanna': { bg: '#ffffff', text: '#1c2430' }          // white
 };
 
+// Solid color + white text, auto-assigned per doctor (each name always gets
+// the same pill color, picked deterministically from this list) — same look
+// as the manual colors above, just without having to name every doctor.
 var NAME_COLOR_PALETTE = [
-  '#1747a6', '#0a6b4b', '#a52323', '#8a5300', '#6b3fd1',
-  '#0f6b72', '#b23a6b', '#c9852e', '#1c7a3e', '#8a2be2',
-  '#c2185b', '#00695c', '#5d4037', '#37474f', '#ad1457'
+  { bg: '#d9a066', text: '#ffffff' }, // tan / orange
+  { bg: '#e0b23d', text: '#ffffff' }, // gold
+  { bg: '#5fae4a', text: '#ffffff' }, // green
+  { bg: '#3f7d3f', text: '#ffffff' }, // dark green
+  { bg: '#4a90d9', text: '#ffffff' }, // blue
+  { bg: '#c9637a', text: '#ffffff' }, // rose / pink
+  { bg: '#8a6fd1', text: '#ffffff' }, // purple
+  { bg: '#3fa9a4', text: '#ffffff' }, // teal
+  { bg: '#a06a4a', text: '#ffffff' }, // brown
+  { bg: '#5c7a99', text: '#ffffff' }, // slate blue
+  { bg: '#8a9a4a', text: '#ffffff' }, // olive
+  { bg: '#c2185b', text: '#ffffff' }, // magenta
+  { bg: '#00695c', text: '#ffffff' }, // deep teal
+  { bg: '#8a5300', text: '#ffffff' }, // amber brown
+  { bg: '#6b3fd1', text: '#ffffff' }  // indigo
 ];
 function hashString(str) {
   var hash = 0;
   for (var i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
   return Math.abs(hash);
 }
-function contrastTextFor(hex) {
-  hex = String(hex || '').replace('#', '');
-  if (hex.length === 3) hex = hex.split('').map(function (c) { return c + c; }).join('');
-  if (hex.length !== 6) return '#1c2430';
-  var r = parseInt(hex.substr(0, 2), 16), g = parseInt(hex.substr(2, 2), 16), b = parseInt(hex.substr(4, 2), 16);
-  var lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return lum > 0.6 ? '#1c2430' : '#ffffff';
-}
 function getNameColors(name) {
   if (!name) return { bg: null, text: '#1c2430' };
+  // Manual overrides are matched by exact name first, so they apply
+  // regardless of which internal doctor ID the name is stored under.
+  if (MANUAL_DOCTOR_COLORS[name]) return MANUAL_DOCTOR_COLORS[name];
+  // Free-text columns (like PMI) often store the name PLUS extra text
+  // (e.g. "...វ៉ាន់ខុល(8h-17h)") — fall back to a substring match so the
+  // doctor's fixed color still applies even with that text appended.
+  var manualKeys = Object.keys(MANUAL_DOCTOR_COLORS);
+  for (var i = 0; i < manualKeys.length; i++) {
+    if (name.indexOf(manualKeys[i]) !== -1) return MANUAL_DOCTOR_COLORS[manualKeys[i]];
+  }
   var doc = STATE.doctors.filter(function (d) { return d.NameSPV === name; })[0];
-  if (doc && doc.color) return { bg: doc.color, text: contrastTextFor(doc.color) };
   var key = doc ? doc.ID : name;
   if (MANUAL_DOCTOR_COLORS[key]) return MANUAL_DOCTOR_COLORS[key];
-  return { bg: null, text: NAME_COLOR_PALETTE[hashString(key) % NAME_COLOR_PALETTE.length] };
+  return NAME_COLOR_PALETTE[hashString(key) % NAME_COLOR_PALETTE.length];
 }
 
 function styleFor(name) {
   var c = getNameColors(name);
-  var s = 'color:' + c.text + ';';
+  var s = 'color:' + c.text + ';font-weight:700;';
   if (c.bg) s += 'background:' + c.bg + ';';
   return s;
 }
@@ -986,26 +1035,10 @@ function renderDoctors() {
     }
     var c = getNameColors(name);
     var badgeStyle = 'color:' + c.text + ';' + (c.bg ? 'background:' + c.bg + ';padding:2px 8px;border-radius:6px;' : '');
-    var swatchValue = d.color || c.bg || '#ffffff';
-    return '<div class="doc-item" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">' +
+    return '<div class="doc-item">' +
       '<span class="name" style="font-weight:700;font-size:13.5px;' + badgeStyle + '">' + escapeHtml(name) + '</span>' +
-      '<input type="color" class="doc-color-input" data-id="' + d.ID + '" value="' + swatchValue + '" title="ប្តូរពណ៌ឈ្មោះ" ' +
-      'style="width:28px;height:28px;border:1px solid var(--line);border-radius:6px;padding:0;cursor:pointer;flex-shrink:0;">' +
       '</div>';
   }).join('');
-
-  document.querySelectorAll('.doc-color-input').forEach(function (input) {
-    input.addEventListener('change', function () {
-      var id = input.dataset.id;
-      var doc = STATE.doctors.filter(function (d) { return d.ID === id; })[0];
-      if (!doc) return;
-      doc.color = input.value;
-      persistRemoteState();
-      renderDoctors();
-      renderSchedule();
-      showToast('ប្តូរពណ៌ឈ្មោះរួចរាល់ ✓');
-    });
-  });
 }
 
 function toggleDoctorEditMode() {
