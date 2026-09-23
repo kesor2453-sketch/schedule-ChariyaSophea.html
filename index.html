@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>កាលវិភាគគ្រូពេទ្យ (ចរិយាសោភា)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f6f9;
+    --card:#ffffff;
+    --ink:#1c2430;
+    --sub:#6b7686;
+    --line:#e6e9ef;
+    --brand:#2f6fed;
+    --brand-ink:#ffffff;
+    --spv:#2f6fed;
+    --spv-bg:#eaf1ff;
+    --off:#e05252;
+    --off-bg:#fdeaea;
+    --warn:#d97706;
+    --warn-bg:#fef3e0;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(20,25,40,.04), 0 8px 24px rgba(20,25,40,.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Noto Sans Khmer','Inter',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    font-size:14px;
+  }
+  #app{max-width:1180px;margin:0 auto;padding:18px 16px 60px;}
+
+  header.top{
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+    margin-bottom:16px;
+  }
+  header.top h1{font-size:19px;font-weight:700;margin:0;}
+  header.top .muted{color:var(--sub);font-size:12.5px;margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .refresh-link{color:var(--brand);cursor:pointer;font-weight:600;text-decoration:underline;}
+
+  .tabs{display:flex;gap:6px;background:var(--card);padding:5px;border-radius:12px;box-shadow:var(--shadow);}
+  .tab{
+    padding:8px 16px;border-radius:9px;cursor:pointer;font-weight:600;color:var(--sub);
+    font-size:13.5px; user-select:none; white-space:nowrap;
+  }
+  .tab.active{background:var(--brand);color:var(--brand-ink);}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:16px;}
+
+  .month-nav{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:space-between;}
+  .month-nav .left{display:flex;align-items:center;gap:8px;}
+  .month-nav button.nav-btn{
+    border:1px solid var(--line);background:#fff;border-radius:9px;width:34px;height:34px;
+    cursor:pointer;font-size:16px;color:var(--ink);
+  }
+  .month-nav button.nav-btn:hover{background:#f0f2f6;}
+  .month-nav .month-label{font-weight:700;font-size:16px;min-width:150px;text-align:center;}
+  .month-nav .today-btn{
+    border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 12px;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--sub);
+  }
+  .complete-btn.is-incomplete{border-color:var(--line);background:#fff;color:var(--sub);}
+  .complete-btn.is-complete{border-color:#2e7d32;background:#e8f5e9;color:#2e7d32;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--sub);}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+  table.sched{width:100%;border-collapse:collapse;font-size:12.8px;}
+  table.sched thead th{
+    background:#f7f8fb;color:var(--sub);font-weight:600;text-align:center;
+    padding:9px 4px;border-bottom:1px solid var(--line);position:sticky;top:0;
+    white-space:nowrap;
+  }
+  table.sched thead th.group-spv{color:var(--spv);}
+  .col-del{
+    display:inline-block;color:var(--off);font-weight:700;font-size:14px;cursor:pointer;
+    margin-left:4px;padding:0 3px;border-radius:4px;
+  }
+  .col-del:hover{background:var(--off-bg);}
+  .col-add{
+    display:inline-block;cursor:pointer;font-size:14px;font-weight:700;color:var(--brand);
+    padding:2px 6px;border-radius:6px;
+  }
+  .col-add:hover{background:var(--spv-bg);}
+  .col-move{
+    display:inline-block;cursor:pointer;font-size:11px;color:var(--sub);
+    padding:1px 3px;border-radius:4px;flex-shrink:0;
+  }
+  .col-move:hover{background:var(--line);color:var(--ink);}
+  .col-label-input{max-width:90px;}
+  table.sched tbody td{
+    padding:6px 4px;border-bottom:1px solid var(--line);text-align:center;vertical-align:middle;
+  }
+  table.sched tbody tr:hover{background:#fafbfd;}
+  table.sched tbody tr.weekend td.date-cell{color:var(--off);}
+  table.sched tbody tr.today{background:#fff3b0;}
+  table.sched tbody tr.today td.date-cell{box-shadow:inset 3px 0 0 var(--warn); font-weight:800;}
+  table.sched tbody tr.auto-off{background:#fdf4f4;}
+  td.date-cell{font-weight:700;white-space:nowrap;text-align:left;padding-left:10px !important;}
+  td.date-cell .dow{display:block;font-weight:500;color:var(--sub);font-size:10.8px;}
+  .auto-off-badge{
+    display:inline-block;background:var(--off-bg);color:#a52323;font-weight:600;
+    font-size:10.5px;padding:2px 8px;border-radius:20px;margin-left:6px;
+  }
+
+  .cell-slot{
+    min-height:30px;border-radius:8px;padding:5px 6px;cursor:pointer;
+    border:1px solid transparent;font-size:12px;line-height:1.25;
+    transition:background .1s;
+  }
+  .cell-slot:hover{border-color:var(--line);background:#f7f9fc;}
+  .cell-slot.empty{color:#c3c9d3;}
+  .cell-slot.spv{background:var(--spv-bg);}
+  .cell-slot.off{background:var(--off-bg);color:#a52323;font-weight:600;}
+
+  select.edit-select, input.edit-select{
+    width:100%;font-size:12px;padding:5px;border-radius:7px;border:1px solid var(--brand);
+    font-family:inherit;
+  }
+
+  /* Doctors panel */
+  .doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+  .doc-item{border:1px solid var(--line);border-radius:11px;padding:11px 13px;background:#fbfcfe;}
+  .doc-item .name{font-weight:700;font-size:13.5px;}
+
+  form.add-doc{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);}
+  form.add-doc input, form.add-doc select{
+    padding:8px 10px;border-radius:9px;border:1px solid var(--line);font-family:inherit;font-size:13px;
+  }
+  form.add-doc input{flex:1;min-width:150px;}
+  form.add-doc button{
+    background:var(--brand);color:#fff;border:none;padding:9px 16px;border-radius:9px;font-weight:600;cursor:pointer;font-size:13px;
+  }
+  form.add-doc button:disabled{opacity:.6;cursor:default;}
+
+  /* Payroll */
+  .pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:720px){.pay-grid{grid-template-columns:1fr;}}
+  .pay-col h3{font-size:14px;margin:0 0 10px;}
+  .pay-col h3.spv{color:var(--spv);}
+  .field label{display:block;font-size:11.5px;color:var(--sub);margin-bottom:4px;font-weight:600;}
+  .field input{width:100%;padding:8px 9px;border-radius:9px;border:1px solid var(--line);font-family:inherit;font-size:13px;}
+  table.pay{width:100%;border-collapse:collapse;font-size:12.8px;}
+  table.pay th{text-align:left;color:var(--sub);font-weight:600;padding:6px 4px;border-bottom:1px solid var(--line);}
+  table.pay td{padding:7px 4px;border-bottom:1px solid var(--line);}
+  table.pay td.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .linda-box{
+    margin-top:14px;background:#f1e9ff;border-radius:11px;padding:12px 14px;font-size:12.8px;
+  }
+  .linda-box b{color:#6b3fd1;}
+
+  .toast{
+    position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:#1c2430;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;
+    opacity:0;pointer-events:none;transition:all .25s;z-index:50;box-shadow:var(--shadow);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .loading{
+    display:flex;align-items:center;justify-content:center;padding:40px;color:var(--sub);font-size:13px;gap:8px;
+  }
+  .spinner{
+    width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--brand);
+    border-radius:50%;animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .empty-state{text-align:center;padding:30px;color:var(--sub);font-size:13px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="top">
+    <div>
+      <h1>កាលវិភាគគ្រូពេទ្យ (ចរិយាសោភា)</h1>
+      <div class="muted">ឧបករណ៍/អ្នកកែ៖ <span id="deviceNameLabel">—</span></div>
+    </div>
+    <div class="tabs">
+      <div class="tab active" data-panel="panel-schedule">កាលវិភាគ</div>
+      <div class="tab" data-panel="panel-doctors">គ្រូពេទ្យ</div>
+      <div class="tab" data-panel="panel-payroll">ចំនួនថ្ងៃយាម</div>
+      <div class="tab" data-panel="panel-log">កំណត់ត្រាកែប្រែ</div>
+    </div>
+  </header>
+
+  <!-- SCHEDULE -->
+  <div class="panel active" id="panel-schedule">
+    <div class="card">
+      <div class="month-nav">
+        <div class="left">
+          <button class="nav-btn" id="prevMonth">‹</button>
+          <div class="month-label" id="monthLabel">—</div>
+          <button class="nav-btn" id="nextMonth">›</button>
+          <button class="today-btn" id="todayBtn">ខែនេះ</button>
+          <select class="today-btn" id="monthPicker" style="cursor:pointer;"></select>
+          <button type="button" class="today-btn complete-btn" id="unlockScheduleBtn" onclick="toggleScheduleLock()" style="display:none;"></button>
+        </div>
+        <div class="legend">
+          <span><span class="dot" style="background:var(--spv)"></span> SPV</span>
+          <span><span class="dot" style="background:var(--off)"></span> DAY OFF</span>
+        </div>
+      </div>
+      <div id="scheduleWrap"></div>
+    </div>
+  </div>
+
+  <!-- DOCTORS -->
+  <div class="panel" id="panel-doctors">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+        <div style="font-weight:700;font-size:15px;">បញ្ជីគ្រូពេទ្យ</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button type="button" id="doctorEditToggle" onclick="toggleDoctorEditMode()"
+            style="border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 14px;font-size:12.5px;cursor:pointer;color:var(--brand);font-weight:600;">✎ កែឈ្មោះទាំងអស់</button>
+        </div>
+      </div>
+      <div class="doc-grid" id="docGrid"></div>
+      <form class="add-doc" id="addDocForm">
+        <input type="text" id="newName" placeholder="ឈ្មោះ — ឧ. Dr.Sok Dara">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--sub);">
+          <input type="checkbox" id="newIsLinda" style="width:16px;height:16px;"> Linda?
+        </label>
+        <button type="submit" id="addDocBtn">+ បន្ថែមគ្រូពេទ្យ</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- PAYROLL -->
+  <div class="panel" id="panel-payroll">
+    <div class="card">
+      <div class="month-nav">
+        <div class="left">
+          <button class="nav-btn" id="prevMonthPay">‹</button>
+          <div class="month-label" id="monthLabelPay">—</div>
+          <button class="nav-btn" id="nextMonthPay">›</button>
+          <select class="today-btn" id="monthPickerPay" style="cursor:pointer;"></select>
+        </div>
+      </div>
+      <div id="payWrap"></div>
+    </div>
+  </div>
+
+  <!-- EDIT LOG -->
+  <div class="panel" id="panel-log">
+    <div class="card">
+      <div class="month-nav">
+        <div class="left">
+          <button class="nav-btn" id="prevMonthLog">‹</button>
+          <div class="month-label" id="monthLabelLog">—</div>
+          <button class="nav-btn" id="nextMonthLog">›</button>
+          <select class="today-btn" id="monthPickerLog" style="cursor:pointer;"></select>
+        </div>
+      </div>
+      <div id="logWrap"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  initializeFirestore, persistentLocalCache, doc, setDoc, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ============================================================
+   CONFIG
+   ============================================================ */
+/* ============================================================
+   CONFIG — paste your NEW Firebase project's config here
+   (Firebase Console → Project Settings → Your apps → </> Web app)
+   ============================================================ */
+var firebaseConfig = {
+  apiKey: "AIzaSyBgGZVOh-dl3RphAhLCdkta_KWxZcT20aU",
+  authDomain: "spv-schedule.firebaseapp.com",
+  projectId: "spv-schedule",
+  storageBucket: "spv-schedule.firebasestorage.app",
+  messagingSenderId: "959707281743",
+  appId: "1:959707281743:web:35cc99c80b4903defa2d3a"
+};
+// Optional — only needed if you also want this site to backup to a Google
+// Sheet via Apps Script. Leave as-is (or blank) to skip that entirely.
+var APPS_SCRIPT_URL = '';
+
+var fbApp = initializeApp(firebaseConfig);
+var db = initializeFirestore(fbApp, { localCache: persistentLocalCache() });
+var scheduleDocRef = doc(db, 'scheduleApp', 'chariya-sopheak');
+
+var RATES = { SPV_Day1: 25, SPV_Day2: 25, SPV_Day3: 25, SPV_Night: 25 };
+var KHR_PER_USD = 4000;
+
+var DEFAULT_COLUMNS = [
+  { id: 'SPV_Day1', label: 'ព្រឹក', type: 'name' },
+  { id: 'SPV_Day2', label: 'ព្រឹក', type: 'name' },
+  { id: 'SPV_Day3', label: 'ព្រឹក', type: 'name' },
+  { id: 'SPV_Night', label: 'យប់', type: 'name' },
+  { id: 'SPV_Off', label: 'ផ្សេងៗ', type: 'text' }
+];
+
+// One-time migration: any month already stored with the old default labels
+// ("SPV ១", "SPV យប់", ...) gets updated to the new labels automatically —
+// but only an exact match on the OLD default text, so a label the user has
+// since renamed by hand is never touched.
+var OLD_DEFAULT_LABELS = {
+  SPV_Day1: ['SPV ១', 'ព្រឹក ១'],
+  SPV_Day2: ['SPV ២', 'ព្រឹក ២'],
+  SPV_Day3: ['SPV ៣', 'ព្រឹក ៣'],
+  SPV_Night: ['SPV យប់']
+};
+function migrateOldDefaultLabels() {
+  var changed = false;
+  Object.keys(STATE.columnsByMonth).forEach(function (ym) {
+    STATE.columnsByMonth[ym].forEach(function (c) {
+      var oldVariants = OLD_DEFAULT_LABELS[c.id];
+      if (oldVariants && oldVariants.indexOf(c.label) !== -1) {
+        var fresh = DEFAULT_COLUMNS.filter(function (dc) { return dc.id === c.id; })[0];
+        if (fresh) { c.label = fresh.label; changed = true; }
+      }
+    });
+  });
+  return changed;
+}
+
+var STATE = {
+  doctors: [],
+  scheduleAll: [],
+  columnsByMonth: {}, // { 'YYYY-MM': [ {id,label,type}, ... ] } — each month keeps its own column set
+  unlockedMonths: {}, // { 'YYYY-MM': true } — past months explicitly unlocked for schedule editing
+  rates: RATES,
+  khrPerUsd: KHR_PER_USD,
+  year: new Date().getFullYear(),
+  month: new Date().getMonth() + 1,
+  payYear: null,
+  payMonth: null,
+  logYear: null,
+  logMonth: null,
+  editing: null
+};
+
+// Returns (and lazily creates) the column list for a given "YYYY-MM" key.
+// Brand-new months start from a copy of DEFAULT_COLUMNS but are independent
+// from then on — editing/adding/removing columns in one month never touches
+// any other month.
+function getColumnsForMonth(ym) {
+  if (!STATE.columnsByMonth[ym] || !STATE.columnsByMonth[ym].length) {
+    STATE.columnsByMonth[ym] = JSON.parse(JSON.stringify(DEFAULT_COLUMNS));
+  }
+  return STATE.columnsByMonth[ym];
+}
+function monthKey(y, m) { return y + '-' + pad2(m); }
+function currentScheduleMonthKey() { return monthKey(STATE.year, STATE.month); }
+
+// Edit log (កំណត់ត្រាកែប្រែ) — automatic, tied to the real calendar. A month's
+// edits are recorded only while that month IS the actual current month; once
+// the month ends, recording for it stops permanently (no manual button, no
+// retroactive logging). Entries already recorded remain visible afterward.
+function todayYM() {
+  var d = new Date();
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1);
+}
+function isPastMonthKey(ym) { return ym < todayYM(); }
+function isFutureMonthKey(ym) { return ym > todayYM(); }
+function isCurrentMonthKey(ym) { return ym === todayYM(); }
+
+// Device name attached to every log entry — detected automatically from the
+// browser (iPhone / Samsung / Android / iPad / Desktop), no prompt needed.
+function getDeviceName() {
+  try {
+    var ua = navigator.userAgent || '';
+    if (/iPhone/i.test(ua)) return 'iPhone';
+    if (/iPad/i.test(ua)) return 'iPad';
+    if (/Android/i.test(ua)) return (/SAMSUNG|SM-/i.test(ua)) ? 'Samsung' : 'Android';
+    if (/Macintosh|Windows|Linux/i.test(ua)) return 'Desktop';
+    return 'ឧបករណ៍ផ្សេង';
+  } catch (e) {
+    return 'ឧបករណ៍ផ្សេង';
+  }
+}
+function renderDeviceNameLabel() {
+  var el = document.getElementById('deviceNameLabel');
+  if (el) el.textContent = getDeviceName();
+}
+
+// Schedule editing lock — a month whose date has passed becomes read-only
+// automatically. "unlockScheduleBtn" lets the user explicitly re-enable
+// editing for that one past month (toggle), independent of the edit log.
+function scheduleMonthLocked() {
+  var key = currentScheduleMonthKey();
+  return isPastMonthKey(key) && !STATE.unlockedMonths[key];
+}
+function toggleScheduleLock() {
+  var key = currentScheduleMonthKey();
+  STATE.unlockedMonths[key] = !STATE.unlockedMonths[key];
+  persistRemoteState();
+  renderSchedule();
+  renderScheduleLockButton();
+  showToast(STATE.unlockedMonths[key] ? 'បានដោះសោសម្រាប់កែខែនេះ ✓' : 'ចាក់សោខែនេះឡើងវិញ ✓');
+}
+window.toggleScheduleLock = toggleScheduleLock;
+
+function renderScheduleLockButton() {
+  var btn = document.getElementById('unlockScheduleBtn');
+  if (!btn) return;
+  var key = currentScheduleMonthKey();
+  if (!isPastMonthKey(key)) { btn.style.display = 'none'; return; }
+  var unlocked = !!STATE.unlockedMonths[key];
+  btn.style.display = '';
+  btn.textContent = unlocked ? '🔒 ចាក់សោខែនេះឡើងវិញ' : '🔓 កែប្រែខែនេះ';
+  btn.className = 'today-btn complete-btn ' + (unlocked ? 'is-complete' : 'is-incomplete');
+}
+
+var MONTH_NAMES_KM = ['មករា','កុម្ភៈ','មីនា','មេសា','ឧសភា','មិថុនា','កក្កដា','សីហា','កញ្ញា','តុលា','វិច្ឆិកា','ធ្នូ'];
+var DOW_KM = {'Sunday':'អាទិត្យ','Monday':'ចន្ទ','Tuesday':'អង្គារ','Wednesday':'ពុធ','Thursday':'ព្រហ','Friday':'សុក្រ','Saturday':'សៅរ៍'};
+
+function seedDefaultDoctors() {
+  // Empty on purpose — add doctors from the "គ្រូពេទ្យ" tab's "+ បន្ថែមគ្រូពេទ្យ" form.
+  return [];
+}
+
+function persistRemoteState() {
+  setDoc(scheduleDocRef, {
+    doctors: STATE.doctors, scheduleAll: STATE.scheduleAll, columnsByMonth: STATE.columnsByMonth,
+    unlockedMonths: STATE.unlockedMonths
+  }).catch(function (err) {
+    showToast('⚠ មិនអាចផ្ញើទៅ Firestore បានទេ៖ ' + err.message);
+  });
+}
+
+var firstSnapshotHandled = false;
+
+document.addEventListener('DOMContentLoaded', function () {
+  bindTabs();
+  bindMonthNav();
+  bindDoctorForm();
+  bindManualBackup();
+  renderDeviceNameLabel();
+
+  if (firebaseConfig.apiKey.indexOf('PASTE_YOUR') === 0) {
+    document.getElementById('scheduleWrap').innerHTML =
+      '<div class="empty-state">⚠ សូមដាក់ Firebase config ថ្មីរបស់អ្នកនៅដើម script (firebaseConfig) មុននឹងប្រើគេហទំព័រនេះ</div>';
+    return;
+  }
+
+  document.getElementById('scheduleWrap').innerHTML =
+    '<div class="loading"><span class="spinner"></span> កំពុងភ្ជាប់ Firestore...</div>';
+
+  onSnapshot(scheduleDocRef, function (snap) {
+    if (snap.exists()) {
+      var data = snap.data();
+      STATE.doctors = data.doctors || [];
+      STATE.scheduleAll = data.scheduleAll || [];
+      STATE.columnsByMonth = data.columnsByMonth || {};
+      STATE.unlockedMonths = data.unlockedMonths || {};
+      if (migrateOldDefaultLabels()) persistRemoteState();
+    } else if (!firstSnapshotHandled) {
+      STATE.doctors = seedDefaultDoctors();
+      STATE.columnsByMonth = {};
+      persistRemoteState();
+    }
+    firstSnapshotHandled = true;
+    if (!STATE.payYear) { STATE.payYear = STATE.year; STATE.payMonth = STATE.month; }
+    if (!STATE.logYear) { STATE.logYear = STATE.year; STATE.logMonth = STATE.month; }
+    loadSchedule();
+    renderDoctors();
+    if (document.getElementById('panel-payroll').classList.contains('active')) loadPayroll();
+    if (document.getElementById('panel-log').classList.contains('active')) loadLog();
+  }, function (err) {
+    document.getElementById('scheduleWrap').innerHTML =
+      '<div class="empty-state">⚠ មិនអាចភ្ជាប់ Firestore បានទេ៖ ' + escapeHtml(err.message) +
+      '<br><span style="font-size:11px;">ពិនិត្យ firebaseConfig និង Firestore Rules (allow read, write: if true)</span></div>';
+  });
+});
+
+function bindManualBackup() {
+  var btn = document.getElementById('manualBackupBtn');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
+      showToast('មិនទាន់កំណត់ APPS_SCRIPT_URL ទេ — មិនអាច backup បានទេ');
+      return;
+    }
+    clearTimeout(backupTimer);
+    doBackup();
+    showToast('កំពុងផ្ញើទិន្នន័យទៅ Sheet... ✓ (ពិនិត្យ Sheet ក្នុងប៉ុន្មានវិនាទី)');
+  });
+}
+
+var backupTimer = null;
+function scheduleBackup() {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === 0) return;
+  clearTimeout(backupTimer);
+  backupTimer = setTimeout(doBackup, 1500);
+}
+
+function doBackup() {
+  try {
+    var iframeName = 'backupFrame';
+    var iframe = document.getElementById(iframeName);
+    if (!iframe) {
+      iframe = document.createElement('iframe');
+      iframe.name = iframeName;
+      iframe.id = iframeName;
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+    }
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = APPS_SCRIPT_URL;
+    form.target = iframeName;
+    form.style.display = 'none';
+
+    var input = document.createElement('input');
+    input.name = 'payload';
+    input.value = JSON.stringify({ doctors: STATE.doctors, schedule: STATE.scheduleAll });
+    form.appendChild(input);
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+  } catch (e) { /* backup is best-effort only */ }
+}
+
+function bindTabs() {
+  var tabs = document.querySelectorAll('.tab');
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      tabs.forEach(function (x) { x.classList.remove('active'); });
+      document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
+      t.classList.add('active');
+      document.getElementById(t.dataset.panel).classList.add('active');
+      if (t.dataset.panel === 'panel-payroll') loadPayroll();
+      if (t.dataset.panel === 'panel-doctors') renderDoctors();
+      if (t.dataset.panel === 'panel-log') loadLog();
+    });
+  });
+}
+
+function bindMonthNav() {
+  document.getElementById('prevMonth').addEventListener('click', function () { shiftMonth(-1); });
+  document.getElementById('nextMonth').addEventListener('click', function () { shiftMonth(1); });
+  document.getElementById('todayBtn').addEventListener('click', function () {
+    var now = new Date();
+    STATE.year = now.getFullYear(); STATE.month = now.getMonth() + 1;
+    loadSchedule();
+  });
+  document.getElementById('prevMonthPay').addEventListener('click', function () { shiftPayMonth(-1); });
+  document.getElementById('nextMonthPay').addEventListener('click', function () { shiftPayMonth(1); });
+
+  document.getElementById('monthPicker').addEventListener('change', function (e) {
+    var parts = e.target.value.split('-');
+    STATE.year = Number(parts[0]); STATE.month = Number(parts[1]);
+    loadSchedule();
+  });
+  document.getElementById('monthPickerPay').addEventListener('change', function (e) {
+    var parts = e.target.value.split('-');
+    STATE.payYear = Number(parts[0]); STATE.payMonth = Number(parts[1]);
+    loadPayroll();
+  });
+
+  document.getElementById('prevMonthLog').addEventListener('click', function () { shiftLogMonth(-1); });
+  document.getElementById('nextMonthLog').addEventListener('click', function () { shiftLogMonth(1); });
+  document.getElementById('monthPickerLog').addEventListener('change', function (e) {
+    var parts = e.target.value.split('-');
+    STATE.logYear = Number(parts[0]); STATE.logMonth = Number(parts[1]);
+    loadLog();
+  });
+}
+
+function getAvailableMonths() {
+  var set = {};
+  STATE.scheduleAll.forEach(function (r) {
+    var d = String(r.Date || '');
+    if (d.length >= 7) set[d.slice(0, 7)] = true;
+  });
+  var now = new Date();
+  set[now.getFullYear() + '-' + pad2(now.getMonth() + 1)] = true;
+  return Object.keys(set).sort().reverse();
+}
+
+function monthOptionLabel(ym) {
+  var parts = ym.split('-');
+  return MONTH_NAMES_KM[Number(parts[1]) - 1] + ' ' + parts[0];
+}
+
+function refreshMonthPickers() {
+  var months = getAvailableMonths();
+  var cur = STATE.year + '-' + pad2(STATE.month);
+  var curPay = STATE.payYear + '-' + pad2(STATE.payMonth);
+  var curLog = STATE.logYear + '-' + pad2(STATE.logMonth);
+  var picker = document.getElementById('monthPicker');
+  var pickerPay = document.getElementById('monthPickerPay');
+  var pickerLog = document.getElementById('monthPickerLog');
+  picker.innerHTML = months.map(function (ym) {
+    return '<option value="' + ym + '"' + (ym === cur ? ' selected' : '') + '>' + monthOptionLabel(ym) + '</option>';
+  }).join('');
+  pickerPay.innerHTML = months.map(function (ym) {
+    return '<option value="' + ym + '"' + (ym === curPay ? ' selected' : '') + '>' + monthOptionLabel(ym) + '</option>';
+  }).join('');
+  if (pickerLog) {
+    pickerLog.innerHTML = months.map(function (ym) {
+      return '<option value="' + ym + '"' + (ym === curLog ? ' selected' : '') + '>' + monthOptionLabel(ym) + '</option>';
+    }).join('');
+  }
+}
+
+function shiftMonth(delta) {
+  var m = STATE.month + delta, y = STATE.year;
+  if (m < 1) { m = 12; y--; } else if (m > 12) { m = 1; y++; }
+  STATE.year = y; STATE.month = m;
+  loadSchedule();
+}
+function shiftPayMonth(delta) {
+  var m = STATE.payMonth + delta, y = STATE.payYear;
+  if (m < 1) { m = 12; y--; } else if (m > 12) { m = 1; y++; }
+  STATE.payYear = y; STATE.payMonth = m;
+  loadPayroll();
+}
+function shiftLogMonth(delta) {
+  var m = STATE.logMonth + delta, y = STATE.logYear;
+  if (m < 1) { m = 12; y--; } else if (m > 12) { m = 1; y++; }
+  STATE.logYear = y; STATE.logMonth = m;
+  loadLog();
+}
+
+function loadSchedule() {
+  document.getElementById('monthLabel').textContent = MONTH_NAMES_KM[STATE.month - 1] + ' ' + STATE.year;
+  renderSchedule();
+  refreshMonthPickers();
+  renderScheduleLockButton();
+}
+
+function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+function rowForDate(dateStr) {
+  for (var i = 0; i < STATE.scheduleAll.length; i++) {
+    if (STATE.scheduleAll[i].Date === dateStr) return STATE.scheduleAll[i];
+  }
+  return null;
+}
+
+function findDoctorByNameClient(name) {
+  if (!name) return null;
+  return STATE.doctors.filter(function (d) { return d.NameSPV === name; })[0] || null;
+}
+
+function lindaDoctor() {
+  return STATE.doctors.filter(function (d) { return d.isLinda; })[0] || null;
+}
+
+function rowIsAutoOff(rowObj, cols) {
+  if (!rowObj) return true;
+  cols = cols || getColumnsForMonth(currentScheduleMonthKey());
+  return cols.filter(function (c) { return c.type === 'name'; }).every(function (c) { return !rowObj[c.id]; });
+}
+
+function columnById(id) {
+  var cols = getColumnsForMonth(currentScheduleMonthKey());
+  return cols.filter(function (c) { return c.id === id; })[0] || null;
+}
+
+var headerEditMode = false;
+var dragColId = null;
+
+function renderSchedule() {
+  var y = STATE.year, m = STATE.month;
+  var nDays = daysInMonth(y, m);
+  var today = new Date();
+  var todayStr = today.getFullYear() + '-' + pad2(today.getMonth() + 1) + '-' + pad2(today.getDate());
+  var cols = getColumnsForMonth(currentScheduleMonthKey());
+  var locked = scheduleMonthLocked();
+
+  document.getElementById('monthLabel').textContent = MONTH_NAMES_KM[m - 1] + ' ' + y;
+  renderScheduleLockButton();
+
+  var headerCells = cols.map(function (c, idx) {
+    var inner;
+    if (headerEditMode) {
+      var leftArrow = idx > 0
+        ? '<span class="col-move" title="ផ្លាស់ទីទៅឆ្វេង" onclick="moveColumn(\'' + c.id + '\',-1)">◀</span>' : '';
+      var rightArrow = idx < cols.length - 1
+        ? '<span class="col-move" title="ផ្លាស់ទីទៅស្តាំ" onclick="moveColumn(\'' + c.id + '\',1)">▶</span>' : '';
+      inner = '<div style="display:flex;align-items:center;justify-content:center;gap:2px;flex-wrap:nowrap;">' +
+        leftArrow +
+        '<input type="text" class="edit-select col-label-input" value="' + escapeAttr(c.label) +
+        '" data-colid="' + c.id + '" onchange="renameColumn(this)" style="text-align:center;font-weight:600;">' +
+        rightArrow +
+        '<span class="col-del" title="លុបជួរឈរនេះ" onclick="deleteColumn(\'' + c.id + '\')">×</span>' +
+        '</div>';
+    } else {
+      inner = escapeHtml(c.label);
+    }
+    return '<th class="group-spv" style="padding:2px;cursor:move;" draggable="true" ' +
+      'ondragstart="onColDragStart(event,\'' + c.id + '\')" ondragover="onColDragOver(event)" ondrop="onColDrop(event,\'' + c.id + '\')">' +
+      inner + '</th>';
+  }).join('');
+
+  var html = '';
+  if (locked) {
+    html += '<div style="background:var(--off-bg);color:#a52323;border-radius:10px;padding:9px 13px;font-size:12.5px;margin-bottom:12px;font-weight:600;">' +
+      '🔒 ខែនេះបានបញ្ចប់ហើយ និងត្រូវបានចាក់សោ — ចុច "🔓 កែប្រែខែនេះ" ខាងលើដើម្បីអនុញ្ញាតឲ្យកែ</div>';
+  }
+  html += '<div style="overflow-x:auto;"><table class="sched"><thead><tr>' +
+    '<th style="text-align:left;">កាលបរិច្ឆេទ</th>' + headerCells +
+    '<th style="width:60px;white-space:nowrap;">' +
+    '<span class="col-add" title="បន្ថែមជួរឈរ" onclick="addColumn()">+</span> ' +
+    '<span class="col-add" title="កែ/បញ្ចប់កែឈ្មោះជួរឈរ" onclick="toggleHeaderEditMode()">✎</span>' +
+    '</th>' +
+    '</tr></thead><tbody>';
+
+  for (var d = 1; d <= nDays; d++) {
+    var dateStr = y + '-' + pad2(m) + '-' + pad2(d);
+    var dow = new Date(y, m - 1, d).getDay();
+    var dowName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dow];
+    var isWeekend = (dow === 0 || dow === 6);
+    var row = rowForDate(dateStr) || { Date: dateStr };
+    var isAutoOff = rowIsAutoOff(row, cols);
+
+    var trClasses = [];
+    if (isWeekend) trClasses.push('weekend');
+    if (dateStr === todayStr) trClasses.push('today');
+    if (isAutoOff) trClasses.push('auto-off');
+
+    html += '<tr class="' + trClasses.join(' ') + '">';
+    html += '<td class="date-cell">' + d + '/' + pad2(m) +
+      '<span class="dow">' + DOW_KM[dowName] +
+      (isAutoOff ? '<span class="auto-off-badge">🚫 ថ្ងៃឈប់</span>' : '') +
+      '</span></td>';
+
+    cols.forEach(function (c) {
+      html += (c.type === 'text') ? renderOffCell(dateStr, c.id, row[c.id], locked) : renderSlotCell(dateStr, c.id, row[c.id], locked);
+    });
+    html += '<td></td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  document.getElementById('scheduleWrap').innerHTML = html;
+
+  bindCellClicks();
+}
+
+function moveColumn(id, delta) {
+  var cols = getColumnsForMonth(currentScheduleMonthKey());
+  var idx = cols.findIndex(function (c) { return c.id === id; });
+  var newIdx = idx + delta;
+  if (idx === -1 || newIdx < 0 || newIdx >= cols.length) return;
+  var moved = cols.splice(idx, 1)[0];
+  cols.splice(newIdx, 0, moved);
+  persistRemoteState();
+  renderSchedule();
+}
+window.moveColumn = moveColumn;
+
+function onColDragStart(e, id) {
+  dragColId = id;
+  e.dataTransfer.effectAllowed = 'move';
+}
+window.onColDragStart = onColDragStart;
+
+function onColDragOver(e) {
+  e.preventDefault();
+}
+window.onColDragOver = onColDragOver;
+
+function onColDrop(e, targetId) {
+  e.preventDefault();
+  if (!dragColId || dragColId === targetId) { dragColId = null; return; }
+  var cols = getColumnsForMonth(currentScheduleMonthKey());
+  var fromIdx = cols.findIndex(function (c) { return c.id === dragColId; });
+  var toIdx = cols.findIndex(function (c) { return c.id === targetId; });
+  dragColId = null;
+  if (fromIdx === -1 || toIdx === -1) return;
+  var moved = cols.splice(fromIdx, 1)[0];
+  cols.splice(toIdx, 0, moved);
+  persistRemoteState();
+  renderSchedule();
+  showToast('ប្តូរលំដាប់ជួរឈររួចរាល់ ✓');
+}
+window.onColDrop = onColDrop;
+
+function toggleHeaderEditMode() {
+  headerEditMode = !headerEditMode;
+  renderSchedule();
+}
+window.toggleHeaderEditMode = toggleHeaderEditMode;
+
+function renameColumn(inputEl) {
+  var id = inputEl.dataset.colid;
+  var newLabel = inputEl.value.trim();
+  var col = columnById(id);
+  if (!col) return;
+  if (!newLabel) { inputEl.value = col.label; return; }
+  col.label = newLabel;
+  persistRemoteState();
+  showToast('ប្តូរឈ្មោះជួរឈររួចរាល់ ✓');
+}
+window.renameColumn = renameColumn;
+
+function addColumn() {
+  var cols = getColumnsForMonth(currentScheduleMonthKey());
+  var label = window.prompt('ឈ្មោះជួរឈរថ្មី៖', 'SPV ' + (cols.filter(function (c) { return c.type === 'name'; }).length + 1));
+  if (!label) return;
+  var id = 'col_' + Date.now();
+  cols.push({ id: id, label: label, type: 'name' });
+  persistRemoteState();
+  renderSchedule();
+  showToast('បន្ថែមជួរឈររួចរាល់ ✓ (សម្រាប់តែខែនេះ)');
+}
+window.addColumn = addColumn;
+
+function deleteColumn(id) {
+  var cols = getColumnsForMonth(currentScheduleMonthKey());
+  if (cols.length <= 1) { showToast('ត្រូវមានយ៉ាងហោចណាស់ ១ជួរឈរ'); return; }
+  var col = columnById(id);
+  if (!col) return;
+  if (!window.confirm('លុបជួរឈរ "' + col.label + '"? (ចំពោះខែនេះតែប៉ុណ្ណោះ — ទិន្នន័យចាស់ក្នុងជួរនេះនឹងលាក់ ប៉ុន្តែមិនលុបចេញពី Firestore ទេ)')) return;
+  STATE.columnsByMonth[currentScheduleMonthKey()] = cols.filter(function (c) { return c.id !== id; });
+  persistRemoteState();
+  renderSchedule();
+  showToast('លុបជួរឈររួចរាល់ ✓');
+}
+window.deleteColumn = deleteColumn;
+
+var MANUAL_DOCTOR_COLORS = {
+  // Add specific doctor-ID → color overrides here if needed.
+  // Left empty — colors are assigned automatically per doctor otherwise.
+};
+
+var NAME_COLOR_PALETTE = [
+  '#1747a6', '#0a6b4b', '#a52323', '#8a5300', '#6b3fd1',
+  '#0f6b72', '#b23a6b', '#c9852e', '#1c7a3e', '#8a2be2',
+  '#c2185b', '#00695c', '#5d4037', '#37474f', '#ad1457'
+];
+function hashString(str) {
+  var hash = 0;
+  for (var i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
+  return Math.abs(hash);
+}
+function getNameColors(name) {
+  if (!name) return { bg: null, text: '#1c2430' };
+  var doc = STATE.doctors.filter(function (d) { return d.NameSPV === name; })[0];
+  var key = doc ? doc.ID : name;
+  if (MANUAL_DOCTOR_COLORS[key]) return MANUAL_DOCTOR_COLORS[key];
+  return { bg: null, text: NAME_COLOR_PALETTE[hashString(key) % NAME_COLOR_PALETTE.length] };
+}
+
+function styleFor(name) {
+  var c = getNameColors(name);
+  var s = 'color:' + c.text + ';';
+  if (c.bg) s += 'background:' + c.bg + ';';
+  return s;
+}
+
+function renderSlotCell(dateStr, field, value) {
+  var display = value ? escapeHtml(value) : '—';
+  var style = value ? ' style="' + styleFor(value) + '"' : '';
+  return '<td><div class="cell-slot ' + (value ? 'spv' : 'empty') +
+    '"' + style + ' data-date="' + dateStr + '" data-field="' + field + '" data-value="' + escapeAttr(value || '') + '">' +
+    display + '</div></td>';
+}
+
+function renderOffCell(dateStr, field, value) {
+  var display = value ? escapeHtml(value) : '—';
+  var isCustomName = value && value !== 'DAY OFF';
+  var style = isCustomName ? ' style="' + styleFor(value) + '"' : '';
+  return '<td><div class="cell-slot ' + (value ? 'off' : 'empty') +
+    '"' + style + ' data-date="' + dateStr + '" data-field="' + field + '" data-value="' + escapeAttr(value || '') + '">' +
+    display + '</div></td>';
+}
+
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function escapeAttr(s) { return escapeHtml(s).replace(/"/g, '&quot;'); }
+
+function bindCellClicks() {
+  document.querySelectorAll('.cell-slot').forEach(function (cell) {
+    cell.addEventListener('click', function () { openEditor(cell); });
+  });
+}
+
+function harvestNames(fields) {
+  var set = {};
+  STATE.scheduleAll.forEach(function (r) {
+    fields.forEach(function (f) {
+      if (r[f]) set[r[f]] = true;
+    });
+  });
+  return Object.keys(set).sort();
+}
+
+function lastEditedText(date, field) {
+  var row = rowForDate(date);
+  var meta = row && row._meta && row._meta[field];
+  if (!meta) return null;
+  var d = new Date(meta.at);
+  return pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+}
+
+function makeHistoryBtn(date, field) {
+  var text = lastEditedText(date, field);
+  if (!text) return null;
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = '🕐';
+  btn.title = 'មើលកាលបរិច្ឆេទកែចុងក្រោយ';
+  btn.style.cssText = 'border:none;background:none;cursor:pointer;font-size:12px;padding:2px 4px;flex-shrink:0;';
+  // mousedown + preventDefault (not click) so the input never loses focus
+  // first and auto-commits/closes the editor before this can run.
+  btn.addEventListener('mousedown', function (e) {
+    e.preventDefault();
+    showToast('🕐 កែចុងក្រោយ៖ ' + text);
+  });
+  return btn;
+}
+
+function openEditor(cell) {
+  if (STATE.editing) return;
+  if (scheduleMonthLocked()) {
+    showToast('🔒 ខែនេះត្រូវបានចាក់សោ (ខែបានបញ្ចប់ហើយ) — ចុច "🔓 កែប្រែខែនេះ" ដើម្បីកែ');
+    return;
+  }
+  var date = cell.dataset.date;
+  var field = cell.dataset.field;
+  var currentVal = cell.dataset.value;
+  STATE.editing = { date: date, field: field };
+
+  var col = columnById(field);
+  if (col && col.type === 'text') {
+    // Free-text only — no dropdown/suggestions for this column.
+    var textInput = document.createElement('input');
+    textInput.type = 'text';
+    textInput.className = 'edit-select';
+    textInput.value = currentVal || '';
+    textInput.placeholder = 'សរសេរបំពេញ...';
+
+    cell.innerHTML = '';
+    cell.style.display = 'flex';
+    cell.style.alignItems = 'center';
+    cell.appendChild(textInput);
+    var histBtnText = makeHistoryBtn(date, field);
+    if (histBtnText) cell.appendChild(histBtnText);
+    textInput.focus();
+    textInput.select();
+
+    function commitText() {
+      var newVal = textInput.value.trim();
+      STATE.editing = null;
+      cell.style.display = '';
+      if (newVal === currentVal) { renderSchedule(); return; }
+      saveCellValue(date, field, newVal);
+    }
+    textInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { textInput.blur(); }
+      if (e.key === 'Escape') { STATE.editing = null; cell.style.display = ''; renderSchedule(); }
+    });
+    textInput.addEventListener('blur', function () { setTimeout(commitText, 80); });
+    return;
+  }
+
+  // Name-type columns — free text with suggestions (type to search, or type a new name).
+  var poolFields = getColumnsForMonth(currentScheduleMonthKey()).filter(function (c) { return c.type === 'name'; }).map(function (c) { return c.id; });
+  var fromDoctors = STATE.doctors.map(function (d) { return d.NameSPV; }).filter(Boolean);
+  var fromHistory = harvestNames(poolFields);
+  var suggestions = fromDoctors.concat(fromHistory);
+  var seen = {};
+  suggestions = suggestions.filter(function (s) { return s && !seen[s] && (seen[s] = true); });
+
+  var listId = 'dlist_' + date.replace(/-/g, '') + '_' + field;
+  var datalist = document.createElement('datalist');
+  datalist.id = listId;
+  suggestions.forEach(function (s) {
+    var o = document.createElement('option');
+    o.value = s;
+    datalist.appendChild(o);
+  });
+
+  var nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.className = 'edit-select';
+  nameInput.setAttribute('list', listId);
+  nameInput.value = currentVal || '';
+  nameInput.placeholder = 'វាយបញ្ចូលឈ្មោះ...';
+
+  cell.innerHTML = '';
+  cell.style.display = 'flex';
+  cell.style.alignItems = 'center';
+  cell.appendChild(nameInput);
+  cell.appendChild(datalist);
+  var histBtnName = makeHistoryBtn(date, field);
+  if (histBtnName) cell.appendChild(histBtnName);
+  nameInput.focus();
+  nameInput.select();
+
+  function commitName() {
+    var newVal = nameInput.value.trim();
+    STATE.editing = null;
+    cell.style.display = '';
+    if (newVal === currentVal) { renderSchedule(); return; }
+    saveCellValue(date, field, newVal);
+  }
+  nameInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { nameInput.blur(); }
+    if (e.key === 'Escape') { STATE.editing = null; cell.style.display = ''; renderSchedule(); }
+  });
+  nameInput.addEventListener('blur', function () { setTimeout(commitName, 80); });
+}
+
+function saveCellValue(date, field, value) {
+  var row = rowForDate(date);
+  if (!row) { row = { Date: date }; STATE.scheduleAll.push(row); }
+
+  if (value) {
+    var ym = date.slice(0, 7);
+    var cols = getColumnsForMonth(ym);
+    var col = cols.filter(function (c) { return c.id === field; })[0];
+    if (col && col.type === 'name') {
+      var siblings = cols.filter(function (c) { return c.type === 'name' && c.label === col.label && c.id !== field; });
+      var dup = siblings.some(function (s) { return row[s.id] === value; });
+      if (dup) {
+        showToast('⚠ ' + value + ' មានរួចហើយក្នុងក្រុម "' + col.label + '" ថ្ងៃនេះ — មិនអាចដាក់ស្ទួនបានទេ');
+        renderSchedule();
+        return;
+      }
+    }
+  }
+
+  var oldValue = row[field] || '';
+  row[field] = value;
+  var nowIso = new Date().toISOString();
+  row._meta = row._meta || {};
+  row._meta[field] = { at: nowIso };
+
+  var logKey = date.slice(0, 7);
+  if (isCurrentMonthKey(logKey)) {
+    row._log = row._log || {};
+    row._log[field] = row._log[field] || [];
+    row._log[field].push({ at: nowIso, value: value, oldValue: oldValue, device: getDeviceName() });
+  }
+
+  renderSchedule();
+  showToast('រក្សាទុករួចរាល់ ✓');
+
+  persistRemoteState();
+  scheduleBackup();
+}
+
+var doctorEditMode = false;
+
+function renderDoctors() {
+  var grid = document.getElementById('docGrid');
+  var toggleBtn = document.getElementById('doctorEditToggle');
+  if (toggleBtn) toggleBtn.textContent = doctorEditMode ? '💾 រក្សាទុកទាំងអស់' : '✎ កែឈ្មោះទាំងអស់';
+
+  if (!STATE.doctors.length) {
+    grid.innerHTML = '<div class="empty-state">មិនទាន់មានទិន្នន័យគ្រូពេទ្យទេ</div>';
+    return;
+  }
+  grid.innerHTML = STATE.doctors.map(function (d) {
+    var name = d.NameSPV;
+    if (doctorEditMode) {
+      return '<div class="doc-item">' +
+        '<input type="text" class="edit-select doc-name-input" style="width:100%;" ' +
+        'value="' + escapeAttr(name) + '" data-id="' + d.ID + '" data-oldname="' + escapeAttr(name) + '">' +
+        '</div>';
+    }
+    var c = getNameColors(name);
+    var badgeStyle = 'color:' + c.text + ';' + (c.bg ? 'background:' + c.bg + ';padding:2px 8px;border-radius:6px;' : '');
+    return '<div class="doc-item">' +
+      '<span class="name" style="font-weight:700;font-size:13.5px;' + badgeStyle + '">' + escapeHtml(name) + '</span>' +
+      '</div>';
+  }).join('');
+}
+
+function toggleDoctorEditMode() {
+  if (doctorEditMode) {
+    // Currently in edit mode — this click means "save all".
+    var changedCount = 0;
+    document.querySelectorAll('.doc-name-input').forEach(function (inp) {
+      var id = inp.dataset.id;
+      var oldName = inp.dataset.oldname;
+      var newName = inp.value.trim();
+      if (!newName || newName === oldName) return;
+      var doc = STATE.doctors.filter(function (d) { return d.ID === id; })[0];
+      if (!doc) return;
+      doc.NameSPV = newName;
+      changedCount++;
+      // Keep past/future schedule entries in sync with the renamed doctor.
+      // Each row may belong to a month with its own column set, so resolve
+      // per-row rather than assuming the current month's columns apply.
+      STATE.scheduleAll.forEach(function (row) {
+        var rowYm = String(row.Date || '').slice(0, 7);
+        if (!rowYm) return;
+        getColumnsForMonth(rowYm).filter(function (c) { return c.type === 'name'; }).forEach(function (c) {
+          if (row[c.id] === oldName) row[c.id] = newName;
+        });
+      });
+    });
+    if (changedCount > 0) {
+      persistRemoteState();
+      renderSchedule();
+      showToast('រក្សាទុកឈ្មោះទាំងអស់រួចរាល់ ✓ (' + changedCount + ')');
+      scheduleBackup();
+    }
+  }
+  doctorEditMode = !doctorEditMode;
+  renderDoctors();
+}
+window.toggleDoctorEditMode = toggleDoctorEditMode;
+
+function bindDoctorForm() {
+  document.getElementById('addDocForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = document.getElementById('newName').value.trim();
+    var isLinda = document.getElementById('newIsLinda').checked;
+    if (!name) { showToast('សូមបញ្ចូលឈ្មោះ'); return; }
+
+    var id = 'S' + Date.now();
+    var doctor = { ID: id, NameSPV: name, isLinda: isLinda, Active: true };
+    STATE.doctors.push(doctor);
+    persistRemoteState();
+    renderDoctors();
+    showToast('បន្ថែមគ្រូពេទ្យរួចរាល់ ✓');
+    document.getElementById('addDocForm').reset();
+    scheduleBackup();
+  });
+}
+
+function computePayrollClient(year, month) {
+  var prefix = year + '-' + pad2(month);
+  var rows = STATE.scheduleAll.filter(function (r) { return String(r.Date).indexOf(prefix) === 0; });
+  var spvCounts = {};
+  var nameCols = getColumnsForMonth(monthKey(year, month)).filter(function (c) { return c.type === 'name'; });
+
+  rows.forEach(function (r) {
+    nameCols.forEach(function (col) {
+      var name = r[col.id];
+      if (!name) return;
+      var doc = findDoctorByNameClient(name);
+      var key = doc ? doc.ID : name;
+      var displayName = doc ? doc.NameSPV : name;
+      if (!spvCounts[key]) spvCounts[key] = { name: displayName, dayShifts: 0, nightShifts: 0, shifts: 0 };
+      // Classify by the column's current header text, not a fixed id — so
+      // renaming a header to/from "ព្រឹក"/"យប់" reclassifies it automatically.
+      var isNight = col.label.indexOf('យប់') !== -1;
+      var isMorning = col.label.indexOf('ព្រឹក') !== -1;
+      if (isNight) spvCounts[key].nightShifts++;
+      else if (isMorning) spvCounts[key].dayShifts++;
+      else spvCounts[key].dayShifts++; // fallback: anything not explicitly "យប់" counts as day
+      spvCounts[key].shifts++;
+    });
+  });
+
+  var list = Object.keys(spvCounts).map(function (k) { return spvCounts[k]; })
+    .sort(function (a, b) { return b.shifts - a.shifts; });
+
+  return { spv: list };
+}
+
+function loadPayroll() {
+  if (!STATE.payYear) { STATE.payYear = STATE.year; STATE.payMonth = STATE.month; }
+  document.getElementById('monthLabelPay').textContent = MONTH_NAMES_KM[STATE.payMonth - 1] + ' ' + STATE.payYear;
+  var summary = computePayrollClient(STATE.payYear, STATE.payMonth);
+  renderPayroll(summary);
+  refreshMonthPickers();
+}
+
+// ---- Edit log (កំណត់ត្រាកែប្រែ) ----
+function loadLog() {
+  if (!STATE.logYear) { STATE.logYear = STATE.year; STATE.logMonth = STATE.month; }
+  document.getElementById('monthLabelLog').textContent = MONTH_NAMES_KM[STATE.logMonth - 1] + ' ' + STATE.logYear;
+  renderLog();
+  refreshMonthPickers();
+}
+
+function renderLog() {
+  var y = STATE.logYear, m = STATE.logMonth;
+  var key = monthKey(y, m);
+  var wrap = document.getElementById('logWrap');
+
+  if (isFutureMonthKey(key)) {
+    wrap.innerHTML = '<div class="empty-state">ខែនេះមិនទាន់មកដល់ទេ — កំណត់ត្រានឹងចាប់ផ្តើមកត់ត្រាដោយស្វ័យប្រវត្តិកាលបើដល់ខែនេះ</div>';
+    return;
+  }
+
+  var prefix = y + '-' + pad2(m);
+  var cols = getColumnsForMonth(key);
+  var entries = [];
+  STATE.scheduleAll.forEach(function (row) {
+    if (String(row.Date || '').indexOf(prefix) !== 0) return;
+    cols.forEach(function (c) {
+      var log = (row._log && row._log[c.id]) || [];
+      log.forEach(function (e) {
+        entries.push({ date: row.Date, field: c.label, value: e.value, oldValue: e.oldValue, device: e.device, at: e.at });
+      });
+    });
+  });
+  entries.sort(function (a, b) { return new Date(b.at) - new Date(a.at); });
+
+  if (!entries.length) {
+    wrap.innerHTML = isCurrentMonthKey(key)
+      ? '<div class="empty-state">កំពុងកត់ត្រា (ខែនេះ) — មិនទាន់មានការកែប្រែទេ</div>'
+      : '<div class="empty-state">ខែនេះបានបញ្ចប់ — មិនមានការកែប្រែត្រូវបានកត់ត្រាទុកទេ</div>';
+    return;
+  }
+
+  var note = isCurrentMonthKey(key)
+    ? '<div style="color:var(--brand);font-size:12px;font-weight:600;margin-bottom:8px;">● កំពុងកត់ត្រា (ខែនេះ)</div>'
+    : '<div style="color:var(--sub);font-size:12px;font-weight:600;margin-bottom:8px;">🔒 ខែនេះបានបញ្ចប់ការកត់ត្រា</div>';
+
+  var rows = entries.map(function (e) {
+    var d = new Date(e.at);
+    var when = pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    var dParts = e.date.split('-');
+    var fromCell = e.oldValue ? escapeHtml(e.oldValue) : '<span style="color:var(--sub);">(ទទេ)</span>';
+    var toCell = e.value ? escapeHtml(e.value) : '<span style="color:var(--off);">(សម្អាត)</span>';
+    var deviceCell = e.device ? escapeHtml(e.device) : '<span style="color:var(--sub);">—</span>';
+    return '<tr><td>' + dParts[2] + '/' + dParts[1] + '</td><td>' + escapeHtml(e.field) + '</td><td>' + fromCell +
+      '</td><td>→ ' + toCell + '</td><td>' + deviceCell + '</td><td style="color:var(--sub);white-space:nowrap;">' + when + '</td></tr>';
+  }).join('');
+
+  wrap.innerHTML = note + '<div style="overflow-x:auto;"><table class="pay"><thead><tr>' +
+    '<th>ថ្ងៃ</th><th>វេន</th><th>ពី</th><th>ទៅ</th><th>ឧបករណ៍/អ្នកកែ</th><th style="text-align:right;">ពេលកែប្រែ</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+
+function renderPayroll(summary) {
+  if (!summary) { document.getElementById('payWrap').innerHTML = '<div class="empty-state">មិនមានទិន្នន័យទេ</div>'; return; }
+
+  function table(list) {
+    if (!list.length) return '<div class="empty-state" style="padding:14px 0;">មិនមានវេនទេ</div>';
+    var rows = list.map(function (c) {
+      return '<tr><td>' + escapeHtml(c.name) + '</td>' +
+        '<td class="num">' + c.dayShifts + '</td><td class="num">' + c.nightShifts + '</td><td class="num">' + c.shifts + '</td></tr>';
+    }).join('');
+    return '<table class="pay"><thead><tr><th>ឈ្មោះ</th>' +
+      '<th style="text-align:right;">ព្រឹក</th><th style="text-align:right;">យប់</th><th style="text-align:right;">សរុប</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>';
+  }
+
+  var html = '<div class="pay-grid"><div class="pay-col"><h3 class="spv">SPV</h3>' + table(summary.spv) + '</div></div>';
+
+  document.getElementById('payWrap').innerHTML = html;
+}
+
+var toastTimer = null;
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
+}
+
+function showError(err) {
+  console.error(err);
+  showToast('កំហុស៖ ' + (err && err.message ? err.message : String(err)));
+}
+</script>
+</body>
+</html>
