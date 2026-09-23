@@ -774,10 +774,25 @@ var MANUAL_DOCTOR_COLORS = {
   'Dr.Nam Vanna': { bg: '#ffffff', text: '#1c2430' }           // white
 };
 
+// Solid color + white text, auto-assigned per doctor (each name always gets
+// the same pill color, picked deterministically from this list) — same look
+// as the manual colors above, just without having to name every doctor.
 var NAME_COLOR_PALETTE = [
-  '#1747a6', '#0a6b4b', '#a52323', '#8a5300', '#6b3fd1',
-  '#0f6b72', '#b23a6b', '#c9852e', '#1c7a3e', '#8a2be2',
-  '#c2185b', '#00695c', '#5d4037', '#37474f', '#ad1457'
+  { bg: '#d9a066', text: '#ffffff' }, // tan / orange
+  { bg: '#e0b23d', text: '#ffffff' }, // gold
+  { bg: '#5fae4a', text: '#ffffff' }, // green
+  { bg: '#3f7d3f', text: '#ffffff' }, // dark green
+  { bg: '#4a90d9', text: '#ffffff' }, // blue
+  { bg: '#c9637a', text: '#ffffff' }, // rose / pink
+  { bg: '#8a6fd1', text: '#ffffff' }, // purple
+  { bg: '#3fa9a4', text: '#ffffff' }, // teal
+  { bg: '#a06a4a', text: '#ffffff' }, // brown
+  { bg: '#5c7a99', text: '#ffffff' }, // slate blue
+  { bg: '#8a9a4a', text: '#ffffff' }, // olive
+  { bg: '#c2185b', text: '#ffffff' }, // magenta
+  { bg: '#00695c', text: '#ffffff' }, // deep teal
+  { bg: '#8a5300', text: '#ffffff' }, // amber brown
+  { bg: '#6b3fd1', text: '#ffffff' }  // indigo
 ];
 function hashString(str) {
   var hash = 0;
@@ -792,12 +807,12 @@ function getNameColors(name) {
   var doc = STATE.doctors.filter(function (d) { return d.NameSPV === name; })[0];
   var key = doc ? doc.ID : name;
   if (MANUAL_DOCTOR_COLORS[key]) return MANUAL_DOCTOR_COLORS[key];
-  return { bg: null, text: NAME_COLOR_PALETTE[hashString(key) % NAME_COLOR_PALETTE.length] };
+  return NAME_COLOR_PALETTE[hashString(key) % NAME_COLOR_PALETTE.length];
 }
 
 function styleFor(name) {
   var c = getNameColors(name);
-  var s = 'color:' + c.text + ';';
+  var s = 'color:' + c.text + ';font-weight:700;';
   if (c.bg) s += 'background:' + c.bg + ';';
   return s;
 }
