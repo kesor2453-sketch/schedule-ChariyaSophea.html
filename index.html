@@ -766,8 +766,12 @@ function deleteColumn(id) {
 window.deleteColumn = deleteColumn;
 
 var MANUAL_DOCTOR_COLORS = {
-  // Add specific doctor-ID → color overrides here if needed.
-  // Left empty — colors are assigned automatically per doctor otherwise.
+  // Keyed by the exact doctor name as stored in "ឈ្មោះ" (NameSPV).
+  // { bg: '<fill color>', text: '<text color for readability>' }
+  'Dr.Kosal': { bg: '#ffd54f', text: '#7a5200' },              // golden yellow
+  'Dr.Pin sothy': { bg: '#a5d6a7', text: '#1b5e20' },          // green
+  'វេជ្ជ.ស៊ាងលី វ៉ាន់ឌុល': { bg: '#bbdefb', text: '#0d47a1' }, // light blue
+  'Dr.Nam Vanna': { bg: '#ffffff', text: '#1c2430' }           // white
 };
 
 var NAME_COLOR_PALETTE = [
@@ -782,6 +786,9 @@ function hashString(str) {
 }
 function getNameColors(name) {
   if (!name) return { bg: null, text: '#1c2430' };
+  // Manual overrides are matched by exact name first, so they apply
+  // regardless of which internal doctor ID the name is stored under.
+  if (MANUAL_DOCTOR_COLORS[name]) return MANUAL_DOCTOR_COLORS[name];
   var doc = STATE.doctors.filter(function (d) { return d.NameSPV === name; })[0];
   var key = doc ? doc.ID : name;
   if (MANUAL_DOCTOR_COLORS[key]) return MANUAL_DOCTOR_COLORS[key];
