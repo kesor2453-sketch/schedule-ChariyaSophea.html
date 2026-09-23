@@ -151,11 +151,6 @@
   table.pay th{text-align:left;color:var(--sub);font-weight:600;padding:6px 4px;border-bottom:1px solid var(--line);}
   table.pay td{padding:7px 4px;border-bottom:1px solid var(--line);}
   table.pay td.num{text-align:right;font-variant-numeric:tabular-nums;}
-  .linda-box{
-    margin-top:14px;background:#f1e9ff;border-radius:11px;padding:12px 14px;font-size:12.8px;
-  }
-  .linda-box b{color:#6b3fd1;}
-
   .toast{
     position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(20px);
     background:#1c2430;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;
@@ -225,9 +220,6 @@
       <div class="doc-grid" id="docGrid"></div>
       <form class="add-doc" id="addDocForm">
         <input type="text" id="newName" placeholder="ឈ្មោះ — ឧ. Dr.Sok Dara">
-        <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--sub);">
-          <input type="checkbox" id="newIsLinda" style="width:16px;height:16px;"> Linda?
-        </label>
         <button type="submit" id="addDocBtn">+ បន្ថែមគ្រូពេទ្យ</button>
       </form>
     </div>
@@ -238,10 +230,8 @@
     <div class="card">
       <div class="month-nav">
         <div class="left">
-          <button class="nav-btn" id="prevMonthPay">‹</button>
           <div class="month-label" id="monthLabelPay">—</div>
-          <button class="nav-btn" id="nextMonthPay">›</button>
-          <select class="today-btn" id="monthPickerPay" style="cursor:pointer;"></select>
+          <span style="color:var(--sub);font-size:12px;">(ដូចខែក្នុងកាលវិភាគ)</span>
         </div>
       </div>
       <div id="payWrap"></div>
@@ -253,10 +243,8 @@
     <div class="card">
       <div class="month-nav">
         <div class="left">
-          <button class="nav-btn" id="prevMonthLog">‹</button>
           <div class="month-label" id="monthLabelLog">—</div>
-          <button class="nav-btn" id="nextMonthLog">›</button>
-          <select class="today-btn" id="monthPickerLog" style="cursor:pointer;"></select>
+          <span style="color:var(--sub);font-size:12px;">(ដូចខែក្នុងកាលវិភាគ)</span>
         </div>
       </div>
       <div id="logWrap"></div>
@@ -303,8 +291,7 @@ var DEFAULT_COLUMNS = [
   { id: 'SPV_Day1', label: 'ព្រឹក', type: 'name' },
   { id: 'SPV_Day2', label: 'ព្រឹក', type: 'name' },
   { id: 'SPV_Day3', label: 'ព្រឹក', type: 'name' },
-  { id: 'SPV_Night', label: 'យប់', type: 'name' },
-  { id: 'SPV_Off', label: 'ផ្សេងៗ', type: 'text' }
+  { id: 'SPV_Night', label: 'យប់', type: 'name' }
 ];
 
 // One-time migration: any month already stored with the old default labels
@@ -340,10 +327,6 @@ var STATE = {
   khrPerUsd: KHR_PER_USD,
   year: new Date().getFullYear(),
   month: new Date().getMonth() + 1,
-  payYear: null,
-  payMonth: null,
-  logYear: null,
-  logMonth: null,
   editing: null
 };
 
@@ -468,8 +451,6 @@ document.addEventListener('DOMContentLoaded', function () {
       persistRemoteState();
     }
     firstSnapshotHandled = true;
-    if (!STATE.payYear) { STATE.payYear = STATE.year; STATE.payMonth = STATE.month; }
-    if (!STATE.logYear) { STATE.logYear = STATE.year; STATE.logMonth = STATE.month; }
     loadSchedule();
     renderDoctors();
     if (document.getElementById('panel-payroll').classList.contains('active')) loadPayroll();
@@ -553,26 +534,11 @@ function bindMonthNav() {
     STATE.year = now.getFullYear(); STATE.month = now.getMonth() + 1;
     loadSchedule();
   });
-  document.getElementById('prevMonthPay').addEventListener('click', function () { shiftPayMonth(-1); });
-  document.getElementById('nextMonthPay').addEventListener('click', function () { shiftPayMonth(1); });
 
   document.getElementById('monthPicker').addEventListener('change', function (e) {
     var parts = e.target.value.split('-');
     STATE.year = Number(parts[0]); STATE.month = Number(parts[1]);
     loadSchedule();
-  });
-  document.getElementById('monthPickerPay').addEventListener('change', function (e) {
-    var parts = e.target.value.split('-');
-    STATE.payYear = Number(parts[0]); STATE.payMonth = Number(parts[1]);
-    loadPayroll();
-  });
-
-  document.getElementById('prevMonthLog').addEventListener('click', function () { shiftLogMonth(-1); });
-  document.getElementById('nextMonthLog').addEventListener('click', function () { shiftLogMonth(1); });
-  document.getElementById('monthPickerLog').addEventListener('change', function (e) {
-    var parts = e.target.value.split('-');
-    STATE.logYear = Number(parts[0]); STATE.logMonth = Number(parts[1]);
-    loadLog();
   });
 }
 
@@ -595,22 +561,10 @@ function monthOptionLabel(ym) {
 function refreshMonthPickers() {
   var months = getAvailableMonths();
   var cur = STATE.year + '-' + pad2(STATE.month);
-  var curPay = STATE.payYear + '-' + pad2(STATE.payMonth);
-  var curLog = STATE.logYear + '-' + pad2(STATE.logMonth);
   var picker = document.getElementById('monthPicker');
-  var pickerPay = document.getElementById('monthPickerPay');
-  var pickerLog = document.getElementById('monthPickerLog');
   picker.innerHTML = months.map(function (ym) {
     return '<option value="' + ym + '"' + (ym === cur ? ' selected' : '') + '>' + monthOptionLabel(ym) + '</option>';
   }).join('');
-  pickerPay.innerHTML = months.map(function (ym) {
-    return '<option value="' + ym + '"' + (ym === curPay ? ' selected' : '') + '>' + monthOptionLabel(ym) + '</option>';
-  }).join('');
-  if (pickerLog) {
-    pickerLog.innerHTML = months.map(function (ym) {
-      return '<option value="' + ym + '"' + (ym === curLog ? ' selected' : '') + '>' + monthOptionLabel(ym) + '</option>';
-    }).join('');
-  }
 }
 
 function shiftMonth(delta) {
@@ -618,18 +572,6 @@ function shiftMonth(delta) {
   if (m < 1) { m = 12; y--; } else if (m > 12) { m = 1; y++; }
   STATE.year = y; STATE.month = m;
   loadSchedule();
-}
-function shiftPayMonth(delta) {
-  var m = STATE.payMonth + delta, y = STATE.payYear;
-  if (m < 1) { m = 12; y--; } else if (m > 12) { m = 1; y++; }
-  STATE.payYear = y; STATE.payMonth = m;
-  loadPayroll();
-}
-function shiftLogMonth(delta) {
-  var m = STATE.logMonth + delta, y = STATE.logYear;
-  if (m < 1) { m = 12; y--; } else if (m > 12) { m = 1; y++; }
-  STATE.logYear = y; STATE.logMonth = m;
-  loadLog();
 }
 
 function loadSchedule() {
@@ -652,10 +594,6 @@ function rowForDate(dateStr) {
 function findDoctorByNameClient(name) {
   if (!name) return null;
   return STATE.doctors.filter(function (d) { return d.NameSPV === name; })[0] || null;
-}
-
-function lindaDoctor() {
-  return STATE.doctors.filter(function (d) { return d.isLinda; })[0] || null;
 }
 
 function rowIsAutoOff(rowObj, cols) {
@@ -734,7 +672,6 @@ function renderSchedule() {
     html += '<tr class="' + trClasses.join(' ') + '">';
     html += '<td class="date-cell">' + d + '/' + pad2(m) +
       '<span class="dow">' + DOW_KM[dowName] +
-      (isAutoOff ? '<span class="auto-off-badge">🚫 ថ្ងៃឈប់</span>' : '') +
       '</span></td>';
 
     cols.forEach(function (c) {
@@ -897,31 +834,6 @@ function harvestNames(fields) {
   return Object.keys(set).sort();
 }
 
-function lastEditedText(date, field) {
-  var row = rowForDate(date);
-  var meta = row && row._meta && row._meta[field];
-  if (!meta) return null;
-  var d = new Date(meta.at);
-  return pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
-}
-
-function makeHistoryBtn(date, field) {
-  var text = lastEditedText(date, field);
-  if (!text) return null;
-  var btn = document.createElement('button');
-  btn.type = 'button';
-  btn.textContent = '🕐';
-  btn.title = 'មើលកាលបរិច្ឆេទកែចុងក្រោយ';
-  btn.style.cssText = 'border:none;background:none;cursor:pointer;font-size:12px;padding:2px 4px;flex-shrink:0;';
-  // mousedown + preventDefault (not click) so the input never loses focus
-  // first and auto-commits/closes the editor before this can run.
-  btn.addEventListener('mousedown', function (e) {
-    e.preventDefault();
-    showToast('🕐 កែចុងក្រោយ៖ ' + text);
-  });
-  return btn;
-}
-
 function openEditor(cell) {
   if (STATE.editing) return;
   if (scheduleMonthLocked()) {
@@ -946,8 +858,6 @@ function openEditor(cell) {
     cell.style.display = 'flex';
     cell.style.alignItems = 'center';
     cell.appendChild(textInput);
-    var histBtnText = makeHistoryBtn(date, field);
-    if (histBtnText) cell.appendChild(histBtnText);
     textInput.focus();
     textInput.select();
 
@@ -995,8 +905,6 @@ function openEditor(cell) {
   cell.style.alignItems = 'center';
   cell.appendChild(nameInput);
   cell.appendChild(datalist);
-  var histBtnName = makeHistoryBtn(date, field);
-  if (histBtnName) cell.appendChild(histBtnName);
   nameInput.focus();
   nameInput.select();
 
@@ -1036,8 +944,6 @@ function saveCellValue(date, field, value) {
   var oldValue = row[field] || '';
   row[field] = value;
   var nowIso = new Date().toISOString();
-  row._meta = row._meta || {};
-  row._meta[field] = { at: nowIso };
 
   var logKey = date.slice(0, 7);
   if (isCurrentMonthKey(logKey)) {
@@ -1120,11 +1026,10 @@ function bindDoctorForm() {
   document.getElementById('addDocForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var name = document.getElementById('newName').value.trim();
-    var isLinda = document.getElementById('newIsLinda').checked;
     if (!name) { showToast('សូមបញ្ចូលឈ្មោះ'); return; }
 
     var id = 'S' + Date.now();
-    var doctor = { ID: id, NameSPV: name, isLinda: isLinda, Active: true };
+    var doctor = { ID: id, NameSPV: name, Active: true };
     STATE.doctors.push(doctor);
     persistRemoteState();
     renderDoctors();
@@ -1166,23 +1071,19 @@ function computePayrollClient(year, month) {
 }
 
 function loadPayroll() {
-  if (!STATE.payYear) { STATE.payYear = STATE.year; STATE.payMonth = STATE.month; }
-  document.getElementById('monthLabelPay').textContent = MONTH_NAMES_KM[STATE.payMonth - 1] + ' ' + STATE.payYear;
-  var summary = computePayrollClient(STATE.payYear, STATE.payMonth);
+  document.getElementById('monthLabelPay').textContent = MONTH_NAMES_KM[STATE.month - 1] + ' ' + STATE.year;
+  var summary = computePayrollClient(STATE.year, STATE.month);
   renderPayroll(summary);
-  refreshMonthPickers();
 }
 
 // ---- Edit log (កំណត់ត្រាកែប្រែ) ----
 function loadLog() {
-  if (!STATE.logYear) { STATE.logYear = STATE.year; STATE.logMonth = STATE.month; }
-  document.getElementById('monthLabelLog').textContent = MONTH_NAMES_KM[STATE.logMonth - 1] + ' ' + STATE.logYear;
+  document.getElementById('monthLabelLog').textContent = MONTH_NAMES_KM[STATE.month - 1] + ' ' + STATE.year;
   renderLog();
-  refreshMonthPickers();
 }
 
 function renderLog() {
-  var y = STATE.logYear, m = STATE.logMonth;
+  var y = STATE.year, m = STATE.month;
   var key = monthKey(y, m);
   var wrap = document.getElementById('logWrap');
 
