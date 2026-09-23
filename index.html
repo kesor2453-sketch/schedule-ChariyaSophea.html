@@ -771,7 +771,7 @@ var MANUAL_DOCTOR_COLORS = {
   'Dr.Deurn Kosal': { bg: '#ffd54f', text: '#7a5200' },        // golden yellow
   'Dr.Pin Sothy': { bg: '#a5d6a7', text: '#1b5e20' },          // green
   'វេជ្ជ.ស៊ាងលី វ៉ាន់ខុល': { bg: '#bbdefb', text: '#0d47a1' }, // light blue
-  'Dr.Nam Vanna': { bg: '#ffffff', text: '#1c2430' }           // white
+  'Dr.Nann Vanna': { bg: '#ffffff', text: '#1c2430' }          // white
 };
 
 // Solid color + white text, auto-assigned per doctor (each name always gets
@@ -804,6 +804,13 @@ function getNameColors(name) {
   // Manual overrides are matched by exact name first, so they apply
   // regardless of which internal doctor ID the name is stored under.
   if (MANUAL_DOCTOR_COLORS[name]) return MANUAL_DOCTOR_COLORS[name];
+  // Free-text columns (like PMI) often store the name PLUS extra text
+  // (e.g. "...វ៉ាន់ខុល(8h-17h)") — fall back to a substring match so the
+  // doctor's fixed color still applies even with that text appended.
+  var manualKeys = Object.keys(MANUAL_DOCTOR_COLORS);
+  for (var i = 0; i < manualKeys.length; i++) {
+    if (name.indexOf(manualKeys[i]) !== -1) return MANUAL_DOCTOR_COLORS[manualKeys[i]];
+  }
   var doc = STATE.doctors.filter(function (d) { return d.NameSPV === name; })[0];
   var key = doc ? doc.ID : name;
   if (MANUAL_DOCTOR_COLORS[key]) return MANUAL_DOCTOR_COLORS[key];
