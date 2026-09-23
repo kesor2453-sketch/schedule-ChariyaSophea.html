@@ -198,10 +198,6 @@
           <select class="today-btn" id="monthPicker" style="cursor:pointer;"></select>
           <button type="button" class="today-btn complete-btn" id="unlockScheduleBtn" onclick="toggleScheduleLock()" style="display:none;"></button>
         </div>
-        <div class="legend">
-          <span><span class="dot" style="background:var(--spv)"></span> SPV</span>
-          <span><span class="dot" style="background:var(--off)"></span> DAY OFF</span>
-        </div>
       </div>
       <div id="scheduleWrap"></div>
     </div>
@@ -291,7 +287,8 @@ var DEFAULT_COLUMNS = [
   { id: 'SPV_Day1', label: 'ព្រឹក', type: 'name' },
   { id: 'SPV_Day2', label: 'ព្រឹក', type: 'name' },
   { id: 'SPV_Day3', label: 'ព្រឹក', type: 'name' },
-  { id: 'SPV_Night', label: 'យប់', type: 'name' }
+  { id: 'SPV_Night', label: 'យប់', type: 'name' },
+  { id: 'SPV_Off', label: 'ផ្សេងៗ', type: 'text' }
 ];
 
 // One-time migration: any month already stored with the old default labels
